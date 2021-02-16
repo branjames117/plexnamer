@@ -52,9 +52,13 @@ try:
     # Ask user to verify correct directory and show name before proceeding.
     proceed = input("If show in " + os.getcwd() + " is called " + show_name + ", enter Y to proceed: ")
     if proceed.lower() not in ["y"]:
-        print("Aborting.")
-        sys.exit()
-    proceed = ""
+        print("Let's try the Unix way then.")
+        proceed = ""
+        show_name = os.getcwd().split("/")[-1].split(" (")[0]
+        proceed = input("If show in " + os.getcwd() + " is called " + show_name + ", enter Y to proceed: ")
+        if proceed.lower() not in ["y"]:
+            print("Aborting.")
+            sys.exit()
 
     # Call the Fileloop function with 0 for verification, 1 for execution.
     file_list, season_list = RenameFiles(0)
