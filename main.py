@@ -1,10 +1,12 @@
+#!/usr/bin/python3
+
 import os
 import sys
 import re
 import shutil
 
 
-def RenameFiles(go = False):
+def renameFiles(go = False):
     file_list = []
     season_list = []
     for file in os.listdir():
@@ -35,68 +37,63 @@ def RenameFiles(go = False):
     return file_list, season_list
 
 
-def MoveFiles():
+def moveFiles():
     moveRegex = re.compile(r" - s\d\de\d\d - ")
     for file in os.listdir():
-        if "Season" not in file:
-            if re.search(moveRegex, file):
-                shutil.move(file, "Season "  + re.search(moveRegex, file).group()[4:6])
+        if re.search(moveRegex, file):
+            shutil.move(file, "Season "  + re.search(moveRegex, file).group()[4:6])
 
 
-try:
-    path = input("Enter the directory containing episode files: ")
-    os.chdir(path)
-
-    # If working directory is e.g. "Z:\Shows\The Office (Seasons 5-6)", return show_name of "The Office" by splitting out the last "\" and the first "("
-    show_name = os.getcwd().split("\\")[-1].split(" (")[0]
-    # Ask user to verify correct directory and show name before proceeding.
-    proceed = input("If show in " + os.getcwd() + " is called " + show_name + ", enter Y to proceed: ")
-    if proceed.lower() not in ["y"]:
-        print("Let's try the Unix way then.")
-        proceed = ""
-        show_name = os.getcwd().split("/")[-1].split(" (")[0]
-        proceed = input("If show in " + os.getcwd() + " is called " + show_name + ", enter Y to proceed: ")
-        if proceed.lower() not in ["y"]:
-            print("Aborting.")
-            sys.exit()
-
-    # Call the Fileloop function with 0 for verification, 1 for execution.
-    file_list, season_list = RenameFiles(0)
-
-    print("Printing list of new file names:")
-    for f in file_list:
-        print("      " + f)
-    # Ask user to verify list of new file names before proceeding.
-    proceed = input("If new file names look accurate, enter Y to proceed: ")
-    if proceed.lower() not in ["y"]:
-        print("Aborting.")
-        sys.exit()
-    proceed = ""
-    # Ask user to verify the last season before proceeding.
+def main(path, show_name):
     try:
-        proceed = input("If the last season is Season " + str(int(max(season_list))) + " and you wish to execute the name changes, enter Y to proceed: ")
-    except ValueError:
-        print("No max season found. Are files named correctly?")
-        print("Aborting.")
-        sys.exit()
-    if proceed.lower() not in ["y"]:
-        print("Aborting.")
-        sys.exit()
-    proceed = ""
-    for x in range(1, int(max(season_list))+1):
+        os.chdir(path)
+
+        # Call the Fileloop function with 0 for verification, 1 for execution.
+        file_list, season_list = renameFiles()
+
+        print("Printing list of new file names:")
+        for f in file_list:
+            print("      " + f)
+        # Ask user to verify list of new file names before proceeding.
         try:
-            os.mkdir("Season " + "{:02d}".format(x))
-        except:
-            print("Directory creation failed.")
-            print("Aborting.")
-    RenameFiles(True)
-    MoveFiles()
+            proceed = input("If new file names look accurate, and Season " + str(int(max(season_list))) + " is the last season, enter go: ")
+        except ValueError:
+            print("Error: No season info found. Are files named correctly (e.g. 0102 - Episode Name.mp4)?")
+            sys.exit()
+        if proceed.lower() != "go":
+            print("Error: User permission not granted.")
+            sys.exit()
+        proceed = ""
 
-except FileNotFoundError:
-    print("Please enter a valid directory.")
-    print("Aborting.")
-except OSError:
-    print("Please enter a valid directory, or close the files to be renamed.")
-    print("Aborting.")
+        for x in range(1, int(max(season_list))+1):
+            try:
+                os.mkdir("Season " + "{:02d}".format(x))
+            except:
+                print("Error: Directory creation failed.")
+        renameFiles(True)
+        moveFiles()
 
-sys.exit() 
+    except FileNotFoundError:
+        print("Error: Please enter a valid directory.")
+        print("Syntax: python3 main.py 'C:\\Path' 'Name of Show'")
+    except OSError:
+        print("Syntax: Please enter a valid directory, or close the files to be renamed.")
+        print("Syntax: python3 main.py 'C:\\Path' 'Name of Show'")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Error: Incorrect number of arguments given.")
+        print("Syntax: python3 main.py 'C:\\Path' 'Name of Show'")
+        sys.exit()
+    if not os.path.isdir(sys.argv[1]):
+        print("Error: Invalid path argument. Path must exist.")
+        print("Syntax: python3 main.py 'C:\\Path' 'Name of Show'")
+        sys.exit()
+    if os.path.isdir(sys.argv[2]):
+        print("Error: Second argument should not be path, but rather the name of the show.")
+        print("Syntax: python3 main.py 'C:\\Path' 'Name of Show'")
+        sys.exit()
+    path = sys.argv[1].replace("\\", "/")
+    show_name = sys.argv[2]
+    main(path, show_name)
